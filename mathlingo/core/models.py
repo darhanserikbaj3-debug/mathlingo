@@ -3,6 +3,7 @@ import csv
 import os
 from datetime import datetime, timedelta
 
+# Global file paths
 USER_FILE = os.path.join('data', 'users.json')
 LOG_FILE = os.path.join('data', 'progress_log.csv')
 
@@ -17,44 +18,50 @@ class User:
         if not os.path.exists('data'):
             os.makedirs('data')
             
-        self.load_or_initialize_data()
+        self.load_data()
         self.check_and_recover_hearts()
 
-    def load_or_initialize_data(self):
-        """Loads data configuration or handles default generation fallback steps."""
+    def load_data(self):
+        """Loads specific user data from a multi-user JSON file."""
         if os.path.exists(USER_FILE):
             try:
                 with open(USER_FILE, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    user_data = data.get(self.username, {})
-                    self.xp = user_data.get('xp', 0)
-                    self.hearts = user_data.get('hearts', 5)
-                    self.last_heart_update = user_data.get('last_heart_update', datetime.now().isoformat())
-                    self.completed_topics = set(user_data.get('completed_topics', []))
-                    return
-            except (json.JSONDecodeError, KeyError):
-                pass
+                    all_users = json.load(f)
+                    if self.username in all_users:
+                        # Load existing user
+                        data = all_users[self.username]
+                        self.xp = data.get("xp", 0)
+                        self.hearts = data.get("hearts", 5)
+                        self.completed_topics = set(data.get("completed_topics", []))
+                        self.last_heart_update = data.get("last_heart_update", self.last_heart_update)
+                        return
+            except json.JSONDecodeError:
+                pass # File is empty or corrupted, will start fresh
+        
+        # If user doesn't exist or file is new, save the initial state
         self.save_data()
 
     def save_data(self):
-        """Saves user profiles cleanly to data targets."""
-        data = {}
+        """Saves current user data without overwriting other users."""
+        all_users = {}
         if os.path.exists(USER_FILE):
             try:
-                with open(USER_FILE, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
+                with open(USER_FILE, "r", encoding='utf-8') as f:
+                    all_users = json.load(f)
             except json.JSONDecodeError:
                 pass
         
-        data[self.username] = {
-            'xp': self.xp,
-            'hearts': self.hearts,
-            'last_heart_update': self.last_heart_update,
-            'completed_topics': list(self.completed_topics)
+        # Update just this specific user's dictionary entry
+        all_users[self.username] = {
+            "username": self.username,
+            "xp": self.xp,
+            "hearts": self.hearts,
+            "completed_topics": list(self.completed_topics),
+            "last_heart_update": self.last_heart_update
         }
         
-        with open(USER_FILE, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=4)
+        with open(USER_FILE, "w", encoding='utf-8') as f:
+            json.dump(all_users, f, indent=4)
 
     def check_and_recover_hearts(self):
         """Calculates 15-minute regeneration increments to restore missing hearts."""
@@ -80,6 +87,7 @@ class User:
             self.save_data()
 
     def log_attempt(self, topic, success):
+        """Logs attempt to CSV."""
         file_exists = os.path.isfile(LOG_FILE)
         with open(LOG_FILE, mode='a', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
@@ -88,6 +96,7 @@ class User:
             writer.writerow([datetime.now().isoformat(), self.username, topic, success])
 
     def get_accuracy(self):
+        """Calculates accuracy using functional programming concepts."""
         if not os.path.exists(LOG_FILE):
             return 0
         try:
@@ -115,5 +124,6 @@ class User:
             # Map raw rows into clean presentation strings
             formatted_logs = map(lambda r: f"[{r['timestamp'][:10]}] {r['topic']}: {'✓' if r['success'] == 'True' else '✗'}", user_attempts)
             
-            for log_entry in formatted_logs:
+            # Reversing the order to show newest first is a nice touch for UI!
+            for log_entry in reversed(list(formatted_logs)):
                 yield log_entry

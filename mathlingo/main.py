@@ -27,38 +27,42 @@ for unit in UNITS_CONFIGURATION:
 class MathLingoApp(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("mathlingo")
+        self.title("MathLingo")
         self.geometry("480x780")
         self.resizable(False, False)
         
-        self.user = User("Darkhan")
         self.engine = MathEngine()
+        
+        # User is None until they authenticate via the Login Screen
+        self.user = None
         
         self.active_topic = None
         self.active_question = None
         self.progress_score = 0
         
-        # Explicit tracker for user-facing UI elements
+        # Explicit tracker for user-facing UI elements to clean up memory
         self.view_elements = []
         
         self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
         
-        self.initialize_top_bar()
-        
         # Base scrollable wrapper configuration
         self.viewport_frame = ctk.CTkScrollableFrame(self, fg_color="#F9FAFB", corner_radius=0)
         self.viewport_frame.grid(row=1, column=0, sticky="nsew")
         
-        self.initialize_bottom_navigation()
-        self.render_map_view()
+        # App boots directly into the login view
+        self.render_login_view()
+
+    # ------------------------------------------------------------------------
+    # CORE UI COMPONENTS
+    # ------------------------------------------------------------------------
 
     def initialize_top_bar(self):
         self.header_frame = ctk.CTkFrame(self, fg_color="#FFFFFF", height=60, corner_radius=0, border_width=1, border_color="#E5E7EB")
         self.header_frame.grid(row=0, column=0, sticky="ew")
         self.header_frame.pack_propagate(False)
         
-        self.xp_lbl = ctk.CTkLabel(self.header_frame, text=f"⚡ {self.user.xp} XP", font=("Arial", 16, "bold"), text_color="#EAB308")
+        self.xp_lbl = ctk.CTkLabel(self.header_frame, text="⚡ 0 XP", font=("Arial", 16, "bold"), text_color="#EAB308")
         self.xp_lbl.pack(side="left", padx=25)
         
         self.hearts_lbl = ctk.CTkLabel(self.header_frame, text="", font=("Arial", 16, "bold"), text_color="#EF4444")
@@ -81,6 +85,73 @@ class MathLingoApp(ctk.CTk):
             except Exception:
                 pass
         self.view_elements.clear()
+
+    def refresh_header_stats(self):
+        if not self.user:
+            return
+        self.xp_lbl.configure(text=f"⚡ {self.user.xp} XP")
+        heart_symbol = "❤️" * self.user.hearts if self.user.hearts > 0 else "💔 Empty"
+        self.hearts_lbl.configure(text=f"{heart_symbol}")
+
+    # ------------------------------------------------------------------------
+    # LOGIN VIEW
+    # ------------------------------------------------------------------------
+
+    def render_login_view(self):
+        self.clear_viewport()
+        
+        ctk.CTkLabel(self.viewport_frame, text="").pack(pady=40) # Spacer
+        
+        logo_lbl = ctk.CTkLabel(self.viewport_frame, text="MathLingo", font=("Arial", 36, "bold"), text_color="#3B82F6")
+        logo_lbl.pack(pady=(20, 5))
+        self.view_elements.append(logo_lbl)
+        
+        sub_lbl = ctk.CTkLabel(self.viewport_frame, text="Learn math the fun way.", font=("Arial", 16), text_color="#6B7280")
+        sub_lbl.pack(pady=(0, 40))
+        self.view_elements.append(sub_lbl)
+
+        self.username_entry = ctk.CTkEntry(
+            self.viewport_frame, placeholder_text="Enter your username", 
+            width=300, height=50, font=("Arial", 16), corner_radius=12,
+            border_color="#E5E7EB", border_width=2
+        )
+        self.username_entry.pack(pady=10)
+        self.view_elements.append(self.username_entry)
+
+        self.login_error_lbl = ctk.CTkLabel(self.viewport_frame, text="", font=("Arial", 12), text_color="#EF4444")
+        self.login_error_lbl.pack(pady=5)
+        self.view_elements.append(self.login_error_lbl)
+
+        login_btn = ctk.CTkButton(
+            self.viewport_frame, text="GET STARTED", font=("Arial", 16, "bold"), 
+            width=300, height=50, corner_radius=12, fg_color="#58CC02", hover_color="#58a700",
+            command=self.handle_login
+        )
+        login_btn.pack(pady=10)
+        self.view_elements.append(login_btn)
+
+    def handle_login(self):
+        username = self.username_entry.get().strip()
+        
+        if not username:
+            self.login_error_lbl.configure(text="Username cannot be empty!")
+            return
+            
+        if len(username) < 3:
+            self.login_error_lbl.configure(text="Username must be at least 3 characters.")
+            return
+
+        # Authenticate / Load Profile
+        self.user = User(username)
+        
+        # Build UI and route to Map
+        self.initialize_top_bar()
+        self.initialize_bottom_navigation()
+        self.render_map_view()
+
+    # ------------------------------------------------------------------------
+    # MAP VIEW
+    # ------------------------------------------------------------------------
 
     def render_map_view(self):
         self.user.check_and_recover_hearts()
@@ -127,6 +198,10 @@ class MathLingoApp(ctk.CTk):
                     connector = ctk.CTkFrame(self.viewport_frame, width=8, height=25, fg_color="#E5E7EB", corner_radius=4)
                     connector.pack(pady=2)
                     self.view_elements.append(connector)
+
+    # ------------------------------------------------------------------------
+    # LESSON LOGIC
+    # ------------------------------------------------------------------------
 
     def start_lesson_loop(self, topic_name):
         self.user.check_and_recover_hearts()
@@ -211,10 +286,9 @@ class MathLingoApp(ctk.CTk):
         else:
             self.load_next_eval_question()
 
-    def refresh_header_stats(self):
-        self.xp_lbl.configure(text=f"⚡ {self.user.xp} XP")
-        heart_symbol = "❤️" * self.user.hearts if self.user.hearts > 0 else "💔 Empty"
-        self.hearts_lbl.configure(text=f"{heart_symbol}")
+    # ------------------------------------------------------------------------
+    # PROFILE VIEW
+    # ------------------------------------------------------------------------
 
     def render_profile_view(self):
         self.user.check_and_recover_hearts()
@@ -234,36 +308,10 @@ class MathLingoApp(ctk.CTk):
         self.add_profile_stat_row(card, "Total Verification Accuracy", f"{self.user.get_accuracy()}%")
         self.add_profile_stat_row(card, "Unlocked Modules Count", f"{len(self.user.completed_topics)} / {len(ALL_TOPICS)}")
 
-    def add_profile_stat_row(self, parent, metrics_title, metrics_value):
-        row = ctk.CTkFrame(parent, fg_color="transparent")
-        row.pack(fill="x", padx=20, pady=12)
-        ctk.CTkLabel(row, text=metrics_title, font=("Arial", 14), text_color="#6B7280").pack(side="left")
-        ctk.CTkLabel(row, text=metrics_value, font=("Arial", 14, "bold"), text_color="#1F2937").pack(side="right")
-
-    def render_profile_view(self):
-        self.user.check_and_recover_hearts()
-        self.clear_viewport()
-        self.refresh_header_stats()
-        
-        prof_lbl = ctk.CTkLabel(self.viewport_frame, text="Profile", font=("Arial", 24, "bold"), text_color="#1F2937")
-        prof_lbl.pack(pady=20)
-        self.view_elements.append(prof_lbl)
-        
-        card = ctk.CTkFrame(self.viewport_frame, fg_color="#FFFFFF", width=400, border_width=2, border_color="#E5E7EB", corner_radius=16)
-        card.pack(pady=10, padx=20, fill="x")
-        self.view_elements.append(card)
-        
-        self.add_profile_stat_row(card, "User Profile Identifier", self.user.username)
-        self.add_profile_stat_row(card, "Accumulated Experience", f"{self.user.xp} XP")
-        self.add_profile_stat_row(card, "Total Verification Accuracy", f"{self.user.get_accuracy()}%")
-        self.add_profile_stat_row(card, "Unlocked Modules Count", f"{len(self.user.completed_topics)} / {len(ALL_TOPICS)}")
-
-        # --- NEW: History Section consuming your Generator/Iterator ---
         history_title = ctk.CTkLabel(self.viewport_frame, text="Recent Activity Log", font=("Arial", 16, "bold"), text_color="#4B5563")
         history_title.pack(pady=(20, 5))
         self.view_elements.append(history_title)
 
-        # Create a container for the logs
         history_card = ctk.CTkFrame(self.viewport_frame, fg_color="#F3F4F6", width=400, corner_radius=12)
         history_card.pack(pady=5, padx=20, fill="x")
         self.view_elements.append(history_card)
@@ -272,20 +320,27 @@ class MathLingoApp(ctk.CTk):
         history_iterator = self.user.generate_history_report()
         has_logs = False
 
-        # Iterate over the generator (Demonstrating Iterator/Generator mechanics)
-        for count, log_text in enumerate(history_iterator):
-            if count >= 3: # Only display the 3 most recent entries to keep the UI clean
-                break
-            has_logs = True
-            log_lbl = ctk.CTkLabel(history_card, text=log_text, font=("Courier New", 12), text_color="#374151", anchor="w")
-            log_lbl.pack(fill="x", padx=15, pady=6)
-            self.view_elements.append(log_lbl)
+        if history_iterator:
+            for count, log_text in enumerate(history_iterator):
+                if count >= 4:  # Display the 4 most recent entries
+                    break
+                has_logs = True
+                log_lbl = ctk.CTkLabel(history_card, text=log_text, font=("Courier New", 12), text_color="#374151", anchor="w")
+                log_lbl.pack(fill="x", padx=15, pady=6)
+                self.view_elements.append(log_lbl)
 
         if not has_logs:
             no_log_lbl = ctk.CTkLabel(history_card, text="No recent activities recorded.", font=("Arial", 12, "italic"), text_color="#9CA3AF")
             no_log_lbl.pack(pady=15)
             self.view_elements.append(no_log_lbl)
-            
+
+    def add_profile_stat_row(self, parent, metrics_title, metrics_value):
+        row = ctk.CTkFrame(parent, fg_color="transparent")
+        row.pack(fill="x", padx=20, pady=12)
+        ctk.CTkLabel(row, text=metrics_title, font=("Arial", 14), text_color="#6B7280").pack(side="left")
+        ctk.CTkLabel(row, text=metrics_value, font=("Arial", 14, "bold"), text_color="#1F2937").pack(side="right")
+
+
 if __name__ == "__main__":
     app = MathLingoApp()
     app.mainloop()

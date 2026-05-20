@@ -1,11 +1,29 @@
 {
     "Darkhan": {
-        "xp": 120,
-        "hearts": 1,
-        "last_heart_update": "2026-05-17T15:47:12.279918",
+        "xp": 240,
+        "hearts": 4,
+        "last_heart_update": "2026-05-19T11:08:20.716043",
         "completed_topics": [
             "Arithmetic",
-            "Powers"
+            "Equations",
+            "Powers",
+            "Algebra"
         ]
+    },
+    "Darkhan Serikbai": {
+        "username": "Darkhan Serikbai",
+        "xp": 40,
+        "hearts": 4,
+        "completed_topics": [
+            "Arithmetic"
+        ],
+        "last_heart_update": "2026-05-20T17:30:16.286748"
+    },
+    "Arlan Olzhabai": {
+        "username": "Arlan Olzhabai",
+        "xp": 0,
+        "hearts": 5,
+        "completed_topics": [],
+        "last_heart_update": "2026-05-20T17:31:22.116924"
     }
 }
