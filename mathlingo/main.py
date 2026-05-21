@@ -33,29 +33,27 @@ class MathLingoApp(ctk.CTk):
         
         self.engine = MathEngine()
         
-        # User is None until they authenticate via the Login Screen
+        # Login to app
         self.user = None
         
         self.active_topic = None
         self.active_question = None
         self.progress_score = 0
         
-        # Explicit tracker for user-facing UI elements to clean up memory
+        # memory 
         self.view_elements = []
         
         self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
         
-        # Base scrollable wrapper configuration
         self.viewport_frame = ctk.CTkScrollableFrame(self, fg_color="#F9FAFB", corner_radius=0)
         self.viewport_frame.grid(row=1, column=0, sticky="nsew")
         
-        # App boots directly into the login view
         self.render_login_view()
 
     # ------------------------------------------------------------------------
-    # CORE UI COMPONENTS
-    # ------------------------------------------------------------------------
+    # UI 
+    # -----------------------------------------------------------------------
 
     def initialize_top_bar(self):
         self.header_frame = ctk.CTkFrame(self, fg_color="#FFFFFF", height=60, corner_radius=0, border_width=1, border_color="#E5E7EB")
@@ -94,7 +92,7 @@ class MathLingoApp(ctk.CTk):
         self.hearts_lbl.configure(text=f"{heart_symbol}")
 
     # ------------------------------------------------------------------------
-    # LOGIN VIEW
+    # LOGIN 
     # ------------------------------------------------------------------------
 
     def render_login_view(self):
@@ -150,7 +148,7 @@ class MathLingoApp(ctk.CTk):
         self.render_map_view()
 
     # ------------------------------------------------------------------------
-    # MAP VIEW
+    # MAP 
     # ------------------------------------------------------------------------
 
     def render_map_view(self):
@@ -200,7 +198,7 @@ class MathLingoApp(ctk.CTk):
                     self.view_elements.append(connector)
 
     # ------------------------------------------------------------------------
-    # LESSON LOGIC
+    # LESSONS
     # ------------------------------------------------------------------------
 
     def start_lesson_loop(self, topic_name):
@@ -287,7 +285,7 @@ class MathLingoApp(ctk.CTk):
             self.load_next_eval_question()
 
     # ------------------------------------------------------------------------
-    # PROFILE VIEW
+    # PROFILE
     # ------------------------------------------------------------------------
 
     def render_profile_view(self):

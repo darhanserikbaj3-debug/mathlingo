@@ -11,7 +11,6 @@ def validate_format(func):
 
 class MathEngine:
     def __init__(self):
-        # Explicit sequential question bank: 4 distinct tasks per tier for all 12 modules
         self.QUESTION_BANK = {
             "Arithmetic": {
                 1: [
@@ -185,14 +184,11 @@ class MathEngine:
 
     def get_fixed_question(self, topic, difficulty_level, progress_score):
         """Fetches the sequential static item corresponding directly to lesson state."""
-        # Map progress (0, 25, 50, 75) into list indexes (0, 1, 2, 3)
         question_idx = (progress_score // 25) % 4
         
-        # Pull directly from our manual bank layout configuration
         target_dataset = self.QUESTION_BANK.get(topic, self.QUESTION_BANK["Arithmetic"])[difficulty_level]
         selected_task = target_dataset[question_idx]
         
-        # Build options cleanly without modification
         shuffled_options = list(selected_task["options"])
         random.shuffle(shuffled_options)
         

@@ -36,9 +36,8 @@ class User:
                         self.last_heart_update = data.get("last_heart_update", self.last_heart_update)
                         return
             except json.JSONDecodeError:
-                pass # File is empty or corrupted, will start fresh
+                pass 
         
-        # If user doesn't exist or file is new, save the initial state
         self.save_data()
 
     def save_data(self):
@@ -51,7 +50,6 @@ class User:
             except json.JSONDecodeError:
                 pass
         
-        # Update just this specific user's dictionary entry
         all_users[self.username] = {
             "username": self.username,
             "xp": self.xp,
@@ -73,7 +71,7 @@ class User:
             last_time = datetime.fromisoformat(self.last_heart_update)
             now = datetime.now()
             elapsed_seconds = (now - last_time).total_seconds()
-            intervals_earned = int(elapsed_seconds // 900)  # 15 mins = 900 seconds
+            intervals_earned = int(elapsed_seconds // 900)  
             
             if intervals_earned > 0:
                 self.hearts = min(5, self.hearts + intervals_earned)
@@ -124,6 +122,5 @@ class User:
             # Map raw rows into clean presentation strings
             formatted_logs = map(lambda r: f"[{r['timestamp'][:10]}] {r['topic']}: {'✓' if r['success'] == 'True' else '✗'}", user_attempts)
             
-            # Reversing the order to show newest first is a nice touch for UI!
             for log_entry in reversed(list(formatted_logs)):
                 yield log_entry
