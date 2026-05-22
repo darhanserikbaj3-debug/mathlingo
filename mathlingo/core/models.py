@@ -8,7 +8,7 @@ USER_FILE = os.path.join('data', 'users.json')
 LOG_FILE = os.path.join('data', 'progress_log.csv')
 
 class User:
-    def __init__(self, username="Darkhan"):
+    def __init__(self, username=None):
         self.username = username
         self.xp = 0
         self.hearts = 5
